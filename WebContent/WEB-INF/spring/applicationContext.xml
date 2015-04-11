@@ -1,0 +1,74 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:websocket="http://www.springframework.org/schema/websocket"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/security
+        http://www.springframework.org/schema/security/spring-security-3.0.xsd
+        http://www.springframework.org/schema/websocket
+        http://www.springframework.org/schema/websocket/spring-websocket.xsd">
+    <context:component-scan base-package="com.trinary" />
+    <context:property-placeholder location="/WEB-INF/application.properties" />
+ 	<context:annotation-config />
+ 
+ 	<tx:annotation-driven/>
+ 	
+ 	<bean id="resourceListBuilder" class="com.trinary.test.hateoas.ResourceListBuilderImpl" />
+ 	
+ 	<bean id="blogResourceAssembler" class="com.trinary.test.hateoas.v1.BlogResourceAssemblerV1" />
+	<bean id="userResourceAssembler" class="com.trinary.test.hateoas.v1.UserResourceAssemblerV1" />
+	<bean id="commentResourceAssembler" class="com.trinary.test.hateoas.v1.CommentResourceAssemblerV1" />
+	
+	<bean id="blogDAO" class="com.trinary.test.persistence.dao.BlogDAOImpl" />
+	<bean id="blogService" class="com.trinary.test.service.BlogServiceImpl" />
+	
+	<bean id="commentDAO" class="com.trinary.test.persistence.dao.CommentDAOImpl" />
+	<bean id="commentService" class="com.trinary.test.service.CommentServiceImpl" />
+	
+	<bean id="userDAO" class="com.trinary.test.persistence.dao.UserDAOImpl" />
+	<bean id="userService" class="com.trinary.test.service.UserServiceImpl" />
+	
+	<bean id="dataSource" class="org.apache.tomcat.dbcp.dbcp.BasicDataSource">
+		<property name="driverClassName" value="org.h2.Driver" />
+		<property name="url" value="jdbc:h2:${db.filename};MODE=MYSQL" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+ 
+ 	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+ 		<property name="dataSource" ref="dataSource" />
+ 		<property name="packagesToScan" value="${db.entityPackage}" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+            	<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+ 	</bean>
+ 	
+ 	<bean id="transactionManager"
+    class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+      <property name="sessionFactory" ref="sessionFactory" />
+   </bean>
+ 
+   <bean id="persistenceExceptionTranslationPostProcessor"
+    class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+    
+    <websocket:message-broker application-destination-prefix="/app">
+        <websocket:stomp-endpoint path="/chat">
+            <websocket:sockjs/>
+        </websocket:stomp-endpoint>
+        <websocket:simple-broker prefix="/queue, /topic"/>
+    </websocket:message-broker>
+    
+    <security:global-method-security pre-post-annotations="enabled"/>
+</beans>

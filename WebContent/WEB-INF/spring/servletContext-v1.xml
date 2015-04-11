@@ -1,0 +1,35 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+        http://www.springframework.org/schema/security
+        http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+	<context:component-scan base-package="com.trinary.test.controller.v1" />
+	<context:property-placeholder location="/WEB-INF/application.properties" />
+	
+	<bean id="blogResourceAssembler" class="com.trinary.test.hateoas.v1.BlogResourceAssemblerV1" />
+	<bean id="userResourceAssembler" class="com.trinary.test.hateoas.v1.UserResourceAssemblerV1" />
+	<bean id="commentResourceAssembler" class="com.trinary.test.hateoas.v1.CommentResourceAssemblerV1" />
+	
+ 	<mvc:annotation-driven />
+ 
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<security:global-method-security pre-post-annotations="enabled"/>
+</beans>
