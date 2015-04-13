@@ -97,6 +97,20 @@
 			   height: 0; 
 			   clear: both;
 			}
+			
+			#auth-div > div {
+				height: 32px;
+				line-height: 32px;
+			}
+			
+			.auth-current {
+				display: table;
+			}
+			
+			.auth-current > div {
+				display: table-cell;
+				vertical-align: middle;
+			}
 		</style>
 	</head>
 	<body>
@@ -106,9 +120,10 @@
 					<input name="username" placeholder="username" type="text" value="" ng-model="username" />
 					<input name="password" placeholder="password" type="password" value="" ng-model="password" />
 					<button ng-click="login(username, password);">Login</button>
+					<button ng-click="createUser();">Create User</button>
 				</form>
-				<div ng-show="authenticated">
-					Welcome back {{principal.username}}.  Logout?  Your session expires at {{token.expires | date: 'short'}}.
+				<div class="auth-current" ng-show="authenticated">
+					<div><img ng-src="{{principal.links.avatar}}?s=32&d=mm" /></div><div>Welcome back {{principal.username}}.  Logout?  Your session expires at {{token.expires | date: 'short'}}.</div>
 				</div>
 			</div>
 			<div ng-controller="blog-controller" ng-init="page=1;pageSize=5;">
@@ -118,17 +133,26 @@
 					</div>
 					<div class="blog-content clearfix">
 						<div class="content-author">
-							<img src="{{blog.author.links.avatar}}?s=128&d=mm" />
+							<img ng-src="{{blog.author.links.avatar}}?s=128&d=mm" />
 						</div>
 						<span class="content-text" marked="blog.text"></span>
 					</div>
 					<div class="comments">
 						<div id="blog-{{blog.blogId}}-comment" class="comment comment-form" ng-show="principal != null">
 							<div class="comment-header">Post as {{principal.username}}</div>
+							<div class="comment-preview" ng-show="newComment.text.length > 0">
+								<div>Preview:</div>
+								<div class="content-text clearfix">
+									<div class="content-author">
+										<img ng-src="{{principal.links.avatar}}?d=mm" />
+									</div>
+									<span class="comment-text" marked="newComment.text"></span>
+								</div>
+							</div>
 							<div class="comment-content">
-								<form>
+								<form name="commentForm">
 									<textarea class="comment-textarea" name="comment.text" ng-model="newComment.text"></textarea>
-									<button ng-click="submitComment(blog, newComment)">Submit</button>
+									<button ng-click="submitComment(commentForm, blog, newComment);" ng-disabled="!newComment.text">Submit</button>
 								</form>
 							</div>
 						</div>
@@ -138,18 +162,18 @@
 							</div>
 							<div class="content-text clearfix">
 								<div class="content-author">
-									<img src="{{comment.author.links.avatar}}?d=mm" />
+									<img ng-src="{{comment.author.links.avatar}}?d=mm" />
 								</div>
 								<span class="comment-text" marked="comment.text"></span>
 							</div>
 						</div>
 						<div class="comment-pages">
-							<div>Comment Pages: <span ng-class="{selected: blog.page == p}" class="page-selector" ng-repeat="p in range(1, blog.commentPage.pages)" ng-click="changeCommentPage(blog, p)">{{p}} </span></div>
+							<div>Comment Pages: <span class="page-selector" ng-if="blog.page != 1" ng-click="changeCommentPage(blog, 1)">&lt;&lt;</span> <span class="page-selector" ng-if="blog.page != 1" ng-click="changeCommentPage(blog, blog.page - 1)">&lt;</span> <span class="page-selector" ng-class="{selected: blog.page == p}" ng-repeat="p in range(1, blog.commentPage.pages)" ng-click="changeCommentPage(blog, p)">{{p}} </span> <span class="page-selector" ng-if="blog.page != blog.commentPage.pages" ng-click="changeCommentPage(blog, blog.page + 1)">&gt;</span> <span class="page-selector" ng-if="blog.page != blog.commentPage.pages" ng-click="changeCommentPage(blog, blog.commentPage.pages)">&gt;&gt;</span></div>
 						</div>
 					</div>
 				</div>
 				<div class="blog-pages">
-					<div>Blog Pages: <span ng-class="{selected: page == p}" class="page-selector" ng-repeat="p in range(1, blogPage.pages)" ng-click="changeBlogPage(blog, p)">{{p}} </span></div>
+					<div>Blog Pages: <span class="page-selector" ng-if="page != 1" ng-click="changeBlogPage(blog, page - 1)">&lt;</span> <span class="page-selector" ng-class="{selected: page == p}" ng-repeat="p in range(1, blogPage.pages)" ng-click="changeBlogPage(blog, p)">{{p}} </span> <span class="page-selector" ng-if="page != blogPage.pages" ng-click="changeBlogPage(blog, page + 1)">&gt;</span></div>
 				</div>
 			</div>
 		</div>

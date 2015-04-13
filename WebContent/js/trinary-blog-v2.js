@@ -98,10 +98,12 @@ app.controller('blog-controller', function($scope, $resource, $http) {
 	}
 	
 	// Submit a comment for a given blog.
-	$scope.submitComment = function(blog, comment) {
-		if (!$scope.authenticated) {
+	$scope.submitComment = function(form, blog, comment) {
+		if (!$scope.authenticated || !comment) {
 			return false;
 		}
+		
+		form.$setPristine();
 		
 		// Submit the comment command
 		$http({
@@ -115,7 +117,7 @@ app.controller('blog-controller', function($scope, $resource, $http) {
 		}).success(function(data) {
 			// Update this comments section
 			setupComments(blog);
-			clearTextAreas();
+			comment.text = "";
 		}).error(function(data, status) {
 			// Authorization issue
 			if (status > 400 && status < 500) {
