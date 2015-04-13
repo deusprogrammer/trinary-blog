@@ -37,6 +37,11 @@
     <url-pattern>/v2/*</url-pattern>
   </servlet-mapping>
   
+  <servlet-mapping>
+  	<servlet-name>default</servlet-name>
+  	<url-pattern>/**</url-pattern>
+  </servlet-mapping>
+  
   <filter>
     <filter-name>cors</filter-name>
     <filter-class>com.trinary.test.filter.SimpleCORSFilter</filter-class>

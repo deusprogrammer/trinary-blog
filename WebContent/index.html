@@ -1,0 +1,157 @@
+<html>
+	<head>
+		<script src="https://code.angularjs.org/1.4.0-beta.6/angular.min.js"></script>
+		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-route.min.js"></script>
+		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-resource.min.js"></script>
+		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-cookies.min.js"></script>
+		<script src="js/angular-hateoas.js"></script>
+		<script src="js/marked.js"></script>
+		<script src="js/angular-marked.min.js"></script>
+		<script src="js/trinary-blog-v2.js"></script>
+		
+		<style>
+			* {
+				margin-top: 0px;
+			}
+			
+			body {
+				margin-top: 10px;
+			}
+		
+			.error {
+			}
+			
+			.selected {
+				font-weight: bold;
+				color: blue;
+			}
+			
+			.page-selector {
+				cursor: pointer;
+			}
+			
+			input.error, textarea.error {
+				border: 1px solid red;
+			}
+		
+			.comment-textarea {
+				border-radius: 5px;
+				border: none;
+				height: 100px;
+				margin-bottom: 5px;
+			}
+		
+			form {
+				margin-bottom: 0px;
+			}
+		
+			.blog {
+				margin-top: 10px;
+			}
+			
+			.blog-content {
+				background-color: #333333;
+				color: white;
+				min-width: 80%;
+				min-height: 50px;
+				padding: 5px;
+			}
+			
+			.content-author {
+				float: left;
+			}
+			
+			.content-text {
+				margin-top: 5px;
+			}
+			
+			.comments {
+				margin-left: 20px;
+			}
+			
+			.comment {
+				background-color: #D3D3D3;
+				color: white;
+				width: 400px;
+				min-height: 50px;
+				margin-top: 10px;
+				padding-bottom: 10px;
+			}
+			
+			.comment-header {
+				border-bottom: 1px solid #9D9D9D;
+			}
+			
+			.comment-content {
+				padding: 5px;
+			}
+			
+			.comment-content textarea {
+				width: 100%;
+			}
+			
+			.clearfix:after { 
+			   content: "."; 
+			   visibility: hidden; 
+			   display: block; 
+			   height: 0; 
+			   clear: both;
+			}
+		</style>
+	</head>
+	<body>
+		<div ng-app="trinary-blog" ng-controller="app-controller">
+			<div id="auth-div">
+				<form ng-hide="authenticated">
+					<input name="username" placeholder="username" type="text" value="" ng-model="username" />
+					<input name="password" placeholder="password" type="password" value="" ng-model="password" />
+					<button ng-click="login(username, password);">Login</button>
+				</form>
+				<div ng-show="authenticated">
+					Welcome back {{principal.username}}.  Logout?  Your session expires at {{token.expires | date: 'short'}}.
+				</div>
+			</div>
+			<div ng-controller="blog-controller" ng-init="page=1;pageSize=5;">
+				<div id="blog-{{blog.blogId}}" class="blog" ng-repeat="blog in blogs">
+					<div class="blog-header">
+						<strong>{{blog.title}}</strong> posted by {{blog.author.username}} on {{blog.created | date: 'short'}}
+					</div>
+					<div class="blog-content clearfix">
+						<div class="content-author">
+							<img src="{{blog.author.links.avatar}}?s=128&d=mm" />
+						</div>
+						<span class="content-text" marked="blog.text"></span>
+					</div>
+					<div class="comments">
+						<div id="blog-{{blog.blogId}}-comment" class="comment comment-form" ng-show="principal != null">
+							<div class="comment-header">Post as {{principal.username}}</div>
+							<div class="comment-content">
+								<form>
+									<textarea class="comment-textarea" name="comment.text" ng-model="newComment.text"></textarea>
+									<button ng-click="submitComment(blog, newComment)">Submit</button>
+								</form>
+							</div>
+						</div>
+						<div class="comment" ng-repeat="comment in blog.comments">
+							<div class="comment-header">
+								Posted by {{comment.author.username}} on {{comment.created | date:'short'}}
+							</div>
+							<div class="content-text clearfix">
+								<div class="content-author">
+									<img src="{{comment.author.links.avatar}}?d=mm" />
+								</div>
+								<span class="comment-text" marked="comment.text"></span>
+							</div>
+						</div>
+						<div class="comment-pages">
+							<div>Comment Pages: <span ng-class="{selected: blog.page == p}" class="page-selector" ng-repeat="p in range(1, blog.commentPage.pages)" ng-click="changeCommentPage(blog, p)">{{p}} </span></div>
+						</div>
+					</div>
+				</div>
+				<div class="blog-pages">
+					<div>Blog Pages: <span ng-class="{selected: page == p}" class="page-selector" ng-repeat="p in range(1, blogPage.pages)" ng-click="changeBlogPage(blog, p)">{{p}} </span></div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
