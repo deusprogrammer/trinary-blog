@@ -64,7 +64,7 @@
     class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
     
     <websocket:message-broker application-destination-prefix="/app">
-        <websocket:stomp-endpoint path="/chat">
+        <websocket:stomp-endpoint path="/stomp">
             <websocket:sockjs/>
         </websocket:stomp-endpoint>
         <websocket:simple-broker prefix="/queue, /topic"/>

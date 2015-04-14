@@ -1,14 +1,20 @@
 <html>
 	<head>
 		<script src="https://code.angularjs.org/1.4.0-beta.6/angular.min.js"></script>
-		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-route.min.js"></script>
-		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-resource.min.js"></script>
-		<script src="https://code.angularjs.org/1.4.0-beta.6/angular-cookies.min.js"></script>
+		<script
+			src="https://code.angularjs.org/1.4.0-beta.6/angular-route.min.js"></script>
+		<script
+			src="https://code.angularjs.org/1.4.0-beta.6/angular-resource.min.js"></script>
+		<script
+			src="https://code.angularjs.org/1.4.0-beta.6/angular-cookies.min.js"></script>
 		<script src="js/angular-hateoas.js"></script>
 		<script src="js/marked.js"></script>
 		<script src="js/angular-marked.min.js"></script>
 		<script src="js/trinary-blog-v2.js"></script>
 		
+		<script src="js/sockjs.js"></script>
+		<script src="js/stomp.js"></script>
+	
 		<style>
 			* {
 				margin-top: 0px;
@@ -17,8 +23,9 @@
 			body {
 				margin-top: 10px;
 			}
-		
+			
 			.error {
+				
 			}
 			
 			.selected {
@@ -33,18 +40,18 @@
 			input.error, textarea.error {
 				border: 1px solid red;
 			}
-		
+			
 			.comment-textarea {
 				border-radius: 5px;
 				border: none;
 				height: 100px;
 				margin-bottom: 5px;
 			}
-		
+			
 			form {
 				margin-bottom: 0px;
 			}
-		
+			
 			.blog {
 				margin-top: 10px;
 			}
@@ -90,12 +97,19 @@
 				width: 100%;
 			}
 			
-			.clearfix:after { 
-			   content: "."; 
-			   visibility: hidden; 
-			   display: block; 
-			   height: 0; 
-			   clear: both;
+			.clearfix:after {
+				content: ".";
+				visibility: hidden;
+				display: block;
+				height: 0;
+				clear: both;
+			}
+			
+			#auth-div {
+				width: 100%;
+				height: 32px;
+				background-color: gray;
+				color: white;
 			}
 			
 			#auth-div > div {
@@ -111,71 +125,196 @@
 				display: table-cell;
 				vertical-align: middle;
 			}
+			
+			#blog-div {
+				width: 65%;
+				float: left;
+			}
+			
+			#sidebar-div {
+				float: right;
+				width: 30%;
+			}
+			
+			.sidebar-item {
+				margin-top: 10px;
+			}
+			
+			#chat-display {
+				margin: 10px;
+				width: 100%;
+				height: 308px;
+				overflow-y: scroll;
+			}
+			
+			.split-pane > * {
+				box-sizing: border-box;
+				position: relative;
+			}
+			
+			#menu-div {
+				margin: auto;
+				padding-bottom: 10px;
+			}
+			
+			#menu-div > ul {
+				display: inline;
+				margin: auto;
+				padding-left: 0px;
+			}
+			
+			#menu-div > ul > li {
+				display: inline-block;
+
+				background-color: #eee;
+				color: white;
+				width: 24.75%;
+				height: 32px;
+				text-align: center;
+				line-height: 32px;
+			}
+			
+			.header-div {
+				background-color: gray;
+				color: white;
+			}
 		</style>
 	</head>
-	<body>
-		<div ng-app="trinary-blog" ng-controller="app-controller">
-			<div id="auth-div">
-				<form ng-hide="authenticated">
-					<input name="username" placeholder="username" type="text" value="" ng-model="username" />
-					<input name="password" placeholder="password" type="password" value="" ng-model="password" />
-					<button ng-click="login(username, password);">Login</button>
-					<button ng-click="createUser();">Create User</button>
-				</form>
-				<div class="auth-current" ng-show="authenticated">
-					<div><img ng-src="{{principal.links.avatar}}?s=32&d=mm" /></div><div>Welcome back {{principal.username}}.  Logout?  Your session expires at {{token.expires | date: 'short'}}.</div>
+<body>
+	<div ng-app="trinary-blog" ng-controller="app-controller">
+		<div id="menu-div">
+			<ul>
+				<li>Home</li>
+				<li>Projects</li>
+				<li>Downloads</li>
+				<li>Contact</li>
+			</ul>
+		</div>
+		<div id="auth-div">
+			<form ng-hide="authenticated">
+				<input name="username" placeholder="username" type="text" value=""
+					ng-model="username" /> <input name="password"
+					placeholder="password" type="password" value="" ng-model="password" />
+				<button ng-click="login(username, password);">Login</button>
+				<button ng-click="createUser();">Create User</button>
+			</form>
+			<div class="auth-current" ng-show="authenticated">
+				<div>
+					<img ng-src="{{principal.links.avatar}}?s=32&d=mm" />
 				</div>
-			</div>
-			<div ng-controller="blog-controller" ng-init="page=1;pageSize=5;">
-				<div id="blog-{{blog.blogId}}" class="blog" ng-repeat="blog in blogs">
-					<div class="blog-header">
-						<strong>{{blog.title}}</strong> posted by {{blog.author.username}} on {{blog.created | date: 'short'}}
-					</div>
-					<div class="blog-content clearfix">
-						<div class="content-author">
-							<img ng-src="{{blog.author.links.avatar}}?s=128&d=mm" />
-						</div>
-						<span class="content-text" marked="blog.text"></span>
-					</div>
-					<div class="comments">
-						<div id="blog-{{blog.blogId}}-comment" class="comment comment-form" ng-show="principal != null">
-							<div class="comment-header">Post as {{principal.username}}</div>
-							<div class="comment-preview" ng-show="newComment.text.length > 0">
-								<div>Preview:</div>
-								<div class="content-text clearfix">
-									<div class="content-author">
-										<img ng-src="{{principal.links.avatar}}?d=mm" />
-									</div>
-									<span class="comment-text" marked="newComment.text"></span>
-								</div>
-							</div>
-							<div class="comment-content">
-								<form name="commentForm">
-									<textarea class="comment-textarea" name="comment.text" ng-model="newComment.text"></textarea>
-									<button ng-click="submitComment(commentForm, blog, newComment);" ng-disabled="!newComment.text">Submit</button>
-								</form>
-							</div>
-						</div>
-						<div class="comment" ng-repeat="comment in blog.comments">
-							<div class="comment-header">
-								Posted by {{comment.author.username}} on {{comment.created | date:'short'}}
-							</div>
-							<div class="content-text clearfix">
-								<div class="content-author">
-									<img ng-src="{{comment.author.links.avatar}}?d=mm" />
-								</div>
-								<span class="comment-text" marked="comment.text"></span>
-							</div>
-						</div>
-						<div class="comment-pages">
-							<div>Comment Pages: <span class="page-selector" ng-if="blog.page != 1" ng-click="changeCommentPage(blog, 1)">&lt;&lt;</span> <span class="page-selector" ng-if="blog.page != 1" ng-click="changeCommentPage(blog, blog.page - 1)">&lt;</span> <span class="page-selector" ng-class="{selected: blog.page == p}" ng-repeat="p in range(1, blog.commentPage.pages)" ng-click="changeCommentPage(blog, p)">{{p}} </span> <span class="page-selector" ng-if="blog.page != blog.commentPage.pages" ng-click="changeCommentPage(blog, blog.page + 1)">&gt;</span> <span class="page-selector" ng-if="blog.page != blog.commentPage.pages" ng-click="changeCommentPage(blog, blog.commentPage.pages)">&gt;&gt;</span></div>
-						</div>
-					</div>
-				</div>
-				<div class="blog-pages">
-					<div>Blog Pages: <span class="page-selector" ng-if="page != 1" ng-click="changeBlogPage(blog, page - 1)">&lt;</span> <span class="page-selector" ng-class="{selected: page == p}" ng-repeat="p in range(1, blogPage.pages)" ng-click="changeBlogPage(blog, p)">{{p}} </span> <span class="page-selector" ng-if="page != blogPage.pages" ng-click="changeBlogPage(blog, page + 1)">&gt;</span></div>
-				</div>
+				<div>Welcome back {{principal.username}}. Logout? Your session
+					expires at {{token.expires | date: 'short'}}.</div>
 			</div>
 		</div>
-	</body>
+		<div class="split-pane">
+			<div id="blog-div">
+				<div ng-controller="blog-controller" ng-init="page=1;pageSize=5;">
+					<div id="blog-{{blog.blogId}}" class="blog"
+						ng-repeat="blog in blogs">
+						<div class="blog-header">
+							<strong>{{blog.title}}</strong> posted by
+							{{blog.author.username}} on {{blog.created | date: 'short'}}
+						</div>
+						<div class="blog-content clearfix">
+							<div class="content-author">
+								<img ng-src="{{blog.author.links.avatar}}?s=128&d=mm" />
+							</div>
+							<span class="content-text" marked="blog.text"></span>
+						</div>
+						<div class="comments">
+							<div id="blog-{{blog.blogId}}-comment"
+								class="comment comment-form" ng-show="principal != null">
+								<div class="comment-header">Post as {{principal.username}}</div>
+								<div class="comment-preview"
+									ng-show="newComment.text.length > 0">
+									<div>Preview:</div>
+									<div class="content-text clearfix">
+										<div class="content-author">
+											<img ng-src="{{principal.links.avatar}}?d=mm" />
+										</div>
+										<span class="comment-text" marked="newComment.text"></span>
+									</div>
+								</div>
+								<div class="comment-content">
+									<form name="commentForm">
+										<textarea class="comment-textarea" name="comment.text"
+											ng-model="newComment.text"></textarea>
+										<button
+											ng-click="submitComment(commentForm, blog, newComment);"
+											ng-disabled="!newComment.text">Submit</button>
+									</form>
+								</div>
+							</div>
+							<div class="comment" ng-repeat="comment in blog.comments">
+								<div class="comment-header">Posted by
+									{{comment.author.username}} on {{comment.created |
+									date:'short'}}</div>
+								<div class="content-text clearfix">
+									<div class="content-author">
+										<img ng-src="{{comment.author.links.avatar}}?d=mm" />
+									</div>
+									<span class="comment-text" marked="comment.text"></span>
+								</div>
+							</div>
+							<div class="comment-pages">
+								<div>
+									Comment Pages:&nbsp; <span class="page-selector"
+										ng-if="blog.page != 1" ng-click="changeCommentPage(blog, 1)">&lt;&lt;</span>&nbsp;
+									<span class="page-selector" ng-if="blog.page != 1"
+										ng-click="changeCommentPage(blog, blog.page - 1)">&lt;</span>&nbsp;
+									<span class="page-selector"
+										ng-class="{selected: blog.page == p}"
+										ng-repeat="p in range(1, blog.commentPage.pages)"
+										ng-click="changeCommentPage(blog, p)">{{p}}&nbsp;</span>&nbsp;
+									<span class="page-selector"
+										ng-if="blog.page != blog.commentPage.pages"
+										ng-click="changeCommentPage(blog, blog.page + 1)">&gt;</span>&nbsp;
+									<span class="page-selector"
+										ng-if="blog.page != blog.commentPage.pages"
+										ng-click="changeCommentPage(blog, blog.commentPage.pages)">&gt;&gt;</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="blog-pages">
+						<div>
+							Blog Pages:&nbsp; <span class="page-selector" ng-if="page != 1"
+								ng-click="changeBlogPage(blog, 1)">&lt;&lt;</span>&nbsp; <span
+								class="page-selector" ng-if="page != 1"
+								ng-click="changeBlogPage(blog, page - 1)">&lt;</span>&nbsp; <span
+								class="page-selector" ng-class="{selected: page == p}"
+								ng-repeat="p in range(1, blogPage.pages)"
+								ng-click="changeBlogPage(blog, p)">{{p}}&nbsp;</span>&nbsp; <span
+								class="page-selector" ng-if="page != blogPage.pages"
+								ng-click="changeBlogPage(blog, page + 1)">&gt;</span>
+						</div>
+						<span class="page-selector" ng-if="page != blogPage.pages"
+							ng-click="changeBlogPage(blog, blogPage.pages)">&gt;&gt;</span>
+					</div>
+				</div>
+			</div>
+			<div id="sidebar-div">
+				<div class="sidebar-item" id="chat-div">
+					<div class="header-div">Chat Box</div>
+					<div ng-controller="chat-controller">
+						<div id="chat-display"></div>
+		    			<input id="chat-text" style="width: 300px; float: left;" type="text" ng-model="message" ng-disabled="!principal"></input>
+		    			<button id="chat-send" style="width: 50px; float: right;" ng-click="sendMessage(message);" ng-disabled="!principal">Send</button>
+	    			</div>
+    			</div>
+    			<div class="clearfix"></div>
+    			<div class="sidebar-item">
+    				<div class="header-div">Popular Blogs</div>
+    				<div ng-controller="popular-blogs">
+    					<ul>
+    						<li>Test Blog 1</li>
+    						<li>Test Blog 2</li>
+    					</ul>
+    				</div>
+    			</div>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+</body>
 </html>

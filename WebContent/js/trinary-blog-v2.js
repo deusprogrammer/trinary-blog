@@ -73,6 +73,26 @@ app.controller('app-controller', function($scope, $http, $cookies) {
 	}
 });
 
+app.controller('chat-controller', function($scope, $resource, $http) {
+    var socket = new SockJS("/trinary-blog/v1/stomp");
+    $scope.chatClient = Stomp.over(socket);
+    $scope.chatLog = "";
+
+    $scope.chatClient.connect({}, function() {
+    	console.log("CONNECTED");
+    	$scope.chatClient.subscribe("/topic/broadcast", function(message) {
+        	var o = JSON.parse(message.body);
+        	console.log("RECEIVED MESSAGE: " + o.text);
+        	var div = document.getElementById("chat-display");
+        	div.innerHTML += "<b>" + o.user + "</b>" + ": " + o.text + "<br/>";
+        });
+    });
+    
+    $scope.sendMessage = function(message) {
+    	$scope.chatClient.send("/app/broadcast", {}, JSON.stringify({user: $scope.principal.username, text: message}));
+    }
+});
+
 app.controller('blog-controller', function($scope, $resource, $http) {
 	console.log("BLOG CONTROLLER LOADED");
 	
