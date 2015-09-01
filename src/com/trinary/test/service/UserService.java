@@ -12,7 +12,7 @@ public interface UserService {
 	User getByApiKey(String apiKey) throws Exception;
 	List<User> getAll(Integer page, Integer pageSize, List<OrderPair> orderBy);
 	
-	void save(User user);
+	User save(User user);
 	Integer getBlogsCount(long id);
 	List<Blog> getBlogs(long id);
 	List<Comment> getComments(long userId);

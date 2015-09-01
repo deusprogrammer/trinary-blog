@@ -48,8 +48,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	 * @see com.trinary.test.service.UserService#save(com.trinary.test.persistence.entity.User)
 	 */
 	@Override
-	public void save(User user) {
+	public User save(User user) {
 		userDAO.save(user);
+		return user;
 	}
 	
 	public Integer getBlogsCount(long id) {

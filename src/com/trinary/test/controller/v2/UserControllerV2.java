@@ -36,12 +36,6 @@ public class UserControllerV2 {
 		return userAssembler.toResources(userService.getAll(page, pageSize, OrderPair.generateAll(orderBy)));
 	}
 	
-	@RequestMapping(value="/", method=RequestMethod.POST)
-	@ResponseBody
-	public UserResource createUser() {
-		return null;
-	}
-	
 	@RequestMapping(value="/{userId}/blogs", method=RequestMethod.GET)
 	@ResponseBody
 	public List<BlogResource> getBlogs(

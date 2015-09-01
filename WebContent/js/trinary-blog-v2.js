@@ -1,13 +1,5 @@
 // trinary-blog.js
-var app = angular.module("trinary-blog", ["ngCookies", "ngRoute", "ngResource", "hateoas", "hc.marked"]);
-
-function clearTextAreas() {
-	var textAreas = document.getElementsByTagName("textarea");
-	for (var i = 0; i < textAreas.length; i++) {
-		var textArea = textAreas[i];
-		textArea.value = "";
-	}
-}
+var app = angular.module("trinary-blog", ["ngCookies", "ngRoute", "ngResource", "ngAnimate", "hateoas", "hc.marked"]);
 
 function copyObject(object) {
 	return JSON.parse(JSON.stringify(object));
@@ -20,6 +12,8 @@ app.config(function (HateoasInterceptorProvider) {
 app.controller('app-controller', function($scope, $http, $cookies) {
 	console.log("APP CONTROLLER LOADED");
 	
+	$scope.divStates = {};
+	$scope.authFailed = false;
 	$scope.token = $cookies.get("token");
 	if ($scope.token != null) {
 		// Strip user data
@@ -49,19 +43,67 @@ app.controller('app-controller', function($scope, $http, $cookies) {
 		$scope.authenticated = false;
 	}
 	
-	$scope.login = function(username, password) {
-		console.log("USERNAME: " + username);
-		console.log("PASSWORD: " + password);
+	$scope.preview = function(string, nWords) {
+	    var words = string.split(" ", nWords);
+	    var lastWord = words[words.length - 1];
+	    var lastWordCount = 0;
+	    
+	    for (var i = 0; i < words.length; i++) {
+	        if (words[i] == lastWord) {
+	            lastWordCount++;
+	        }
+	    }
+	    
+	    var subs = string.split(lastWord);
+	    var previewString = "";
+	    
+	    for (i = 0; i < lastWordCount; i++) {
+	        previewString += subs[i] + lastWord;
+	    }
+	    
+	    return previewString + "...";
+	}
+	
+	$scope.show = function(event, id) {
+		var element = document.getElementById(id);
+		element.style.left = event.target.offsetLeft;
+		element.style.top  = event.target.offsetTop + event.target.offsetHeight;
+		$scope.divStates[id] = true;
+	}
+	
+	$scope.toggle = function(event, id) {
+		if ($scope.divStates[id]) {
+			$scope.hide(event, id);
+		} else {
+			$scope.show(event, id);
+		}
+	}
+	
+	$scope.hide = function(event, id) {
+		$scope.divStates[id] = false;
+	}
+	
+	$scope.shouldShow = function(id) {
+		return $scope.divStates[id];
+	}
+	
+	$scope.createUser = function(newUser) {
+		if (newUser.password != newUser.confirm) {
+			return;
+		}
+		
+		// Submit user creation request
 		$http({
-			url: "/trinary-blog/v2/security/auth",
+			url: "/trinary-blog/v2/security/user",
 			method: "POST",
-			data: {username: $scope.username, password: $scope.password},
+			data: newUser,
 			headers: {'Content-Type': 'application/json'}
 		}).success(function(data) {
 			console.log("TOKEN: " + data.token);
 			$scope.authenticated = true;
 			$scope.token = data;
 			$scope.principal = data.user;
+			$scope.authFailed = false;
 			
 			// Store the token in the cookie
 			$cookies.putObject("token", data, {
@@ -69,6 +111,65 @@ app.controller('app-controller', function($scope, $http, $cookies) {
 			});
 		}).error(function(data) {
 			$scope.authenticated = false;
+			$scope.authError  = "Bad credentials.  Access denied!";
+			$scope.authFailed = true;
+		});
+		
+		newUser.username = "";
+		newUser.password = "";
+		newUser.confirm = "";
+		newUser.emailAddress = "";
+	}
+	
+	$scope.validateForm = function(form) {
+		return form.valid;
+	}
+	
+	$scope.login = function(form, creds) {
+		$http({
+			url: "/trinary-blog/v2/security/auth",
+			method: "POST",
+			data: {username: creds.username, password: creds.password},
+			headers: {'Content-Type': 'application/json'}
+		}).success(function(data) {
+			console.log("TOKEN: " + data.token);
+			$scope.authenticated = true;
+			$scope.token = data;
+			$scope.principal = data.user;
+			$scope.authFailed = false;
+			
+			// Store the token in the cookie
+			$cookies.putObject("token", data, {
+				expires: new Date(data.expires)
+			});
+		}).error(function(data) {
+			$scope.authenticated = false;
+			$scope.authError  = "Bad credentials.  Access denied!";
+			$scope.authFailed = true;
+		});
+		
+		creds.username = "";
+		creds.password = "";
+		form.$setPristine();
+	}
+	
+	$scope.logout = function() {
+		// Strip user data
+		var tokenData = copyObject($cookies.getObject("token"));
+		tokenData.user = null;
+		tokenData.links = null;
+		console.log(tokenData);
+		$http({
+			url: "/trinary-blog/v2/security/deauth",
+			method: "POST",
+			data: tokenData,
+			headers: {'Content-Type': 'application/json'}
+		}).success(function(data) {
+			console.log("TOKEN: " + data.token);
+			$scope.authenticated = false;
+			
+			// Store the token in the cookie
+			$cookies.remove("token");
 		});
 	}
 });
@@ -163,6 +264,7 @@ app.controller('blog-controller', function($scope, $resource, $http) {
 					blog.author = author;
 				});
 				blog.page = 1;
+				blog.preview = true;
 				setupComments(blog);
 			});
 		});

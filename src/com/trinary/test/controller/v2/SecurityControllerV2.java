@@ -1,5 +1,6 @@
 package com.trinary.test.controller.v2;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.trinary.test.hateoas.UserResourceAssembler;
 import com.trinary.test.persistence.entity.User;
 import com.trinary.test.security.AuthObject;
-import com.trinary.test.security.AuthStatus;
+import com.trinary.test.security.UserCreationObject;
 import com.trinary.test.security.token.Token;
 import com.trinary.test.security.token.TokenExpiredException;
 import com.trinary.test.security.token.TokenInvalidException;
@@ -93,15 +93,42 @@ public class SecurityControllerV2 {
 	    return tokenResource;
 	}
 	
-	@RequestMapping(value="/principal")
+	@RequestMapping(value="/user", method=RequestMethod.POST)
 	@ResponseBody
-	public AuthStatus getCurrentPrincipal() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth.getPrincipal() instanceof String) {
-			return new AuthStatus(false, null);
-		}
-		User user = (User)auth.getPrincipal();
-		return new AuthStatus(true, userAssembler.toResource(user));
+	public TokenResource createUser(HttpServletResponse response, @RequestBody UserCreationObject userCreationObject) throws ParseException {
+		// Create an auth object ahead of time so we can store the unhashed password.
+		User user = new User();
+		user.setUsername(userCreationObject.username);
+		user.setCredentials(userCreationObject.password);
+		user.setEmailAddress(userCreationObject.emailAddress);
+		
+		// Save the user, hashing the password before storing it.
+		User details = userService.save(user);
+		
+		UsernamePasswordAuthenticationToken userPasswordToken = new UsernamePasswordAuthenticationToken(userCreationObject.getUsername(), userCreationObject.password);
+	    userPasswordToken.setDetails(details);
+	    
+	    Authentication auth = null;
+	    try {
+		    auth = authenticationManager.authenticate(userPasswordToken);
+	    } catch (BadCredentialsException e) {
+	    	response.setStatus(405);
+	    	return null;
+	    }
+	    
+	    Token token = tokenManager.createToken(auth);
+	    
+	    if (token == null) {
+	    	response.setStatus(500);
+	    	return null;
+	    }
+	    
+	    TokenResource tokenResource = new TokenResource();
+	    tokenResource.setToken(token.getToken());
+	    tokenResource.setExpires(token.getExpires());
+	    tokenResource.setUser(userAssembler.toResource((User)token.getUser()));
+	    
+	    return tokenResource;
 	}
 	
 	@ExceptionHandler(AccessDeniedException.class)
