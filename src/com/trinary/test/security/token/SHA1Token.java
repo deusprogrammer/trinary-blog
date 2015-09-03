@@ -6,7 +6,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.UUID;
 
-import org.apache.tomcat.util.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class SHA1Token extends Token {
@@ -28,7 +28,9 @@ public class SHA1Token extends Token {
 		
 		String token = null;
 		try {
-			token = Base64.encodeBase64String(MessageDigest.getInstance("SHA-1").digest(sb.toString().getBytes()));
+			token = Base64.encodeBase64String(
+					MessageDigest.getInstance("SHA-1").digest(sb.toString().getBytes()))
+					.replaceAll("=", "");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}

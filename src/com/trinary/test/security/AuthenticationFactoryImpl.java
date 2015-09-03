@@ -15,10 +15,7 @@ public class AuthenticationFactoryImpl implements AuthenticationFactory {
 	@Override
 	public Authentication createAuthentication(HttpServletRequest request) {
 		AuthorizationHeader authorization = parseHeader(request);
-		if (authorization == null) {
-			return new TokenAuthentication("");
-		}
-		if (authorization.type.toUpperCase().equals("TOKEN")) {
+		if (authorization != null && authorization.type.toUpperCase().equals("TOKEN")) {
 			return new TokenAuthentication(authorization.getMap().get("token"));
 		} else {
 			return new TokenAuthentication("");
